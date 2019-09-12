@@ -13,6 +13,7 @@ type Block struct {
 	MerkelRoot []byte
 	TimeStamp  uint64
 	Difficulty uint64
+	Nonce      uint64
 	Hash       []byte
 	Data       []byte
 }
@@ -33,6 +34,7 @@ func NewBlock(data string, prevBlockHash []byte) (block *Block) {
 		MerkelRoot: []byte{},
 		TimeStamp:  0,
 		Difficulty: 0,
+		Nonce:      0,
 		Hash:       []byte{},
 		Data:       []byte(data),
 	}
@@ -48,6 +50,7 @@ func (block *Block) setHash() {
 		block.MerkelRoot,
 		block.Uint64toBytes(block.TimeStamp),
 		block.Uint64toBytes(block.Difficulty),
+		block.Uint64toBytes(block.Nonce),
 		block.Hash,
 		block.Data,
 	}
