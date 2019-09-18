@@ -10,6 +10,8 @@ func main() {
 	blockChain.AddBlock("block1")
 	blockChain.AddBlock("block2")
 	//blockChain.GETBlock()
+	blockChain.TestAdd()
+	blockChain.TestReq()
 	datas := blockChain.GetAll()
 	for k, v := range datas {
 		if value, ok := v.([][]byte); ok { //数据断言

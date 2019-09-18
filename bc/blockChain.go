@@ -1,6 +1,7 @@
 package bc
 
 import (
+	"fmt"
 	"zoin/boltUse"
 )
 
@@ -53,4 +54,14 @@ func (bc *BlockChain) GetAll() []interface{} {
 
 func (bc *BlockChain) Close() {
 	bc.Blocks.Close()
+}
+
+func (bc *BlockChain) TestAdd() {
+	db := bc.Blocks
+	db.Put([]byte("nihao"), []byte("您好"))
+}
+func (bc *BlockChain) TestReq() {
+	db := bc.Blocks
+	r := db.GET([]byte("nihao"))
+	fmt.Printf("r:%s", r)
 }

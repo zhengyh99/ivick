@@ -29,7 +29,7 @@ func (this *BoltDB) Close() {
 	this.db.Close()
 }
 
-//设置当前桶
+//设置当前桶，有使用，无创建
 func (this *BoltDB) SetBucket(bucketName string) error {
 	if bucketName == "" {
 		bucketName = "default"
@@ -47,6 +47,24 @@ func (this *BoltDB) SetBucket(bucketName string) error {
 	this.bucket = bucket
 	return nil
 
+}
+
+//判断桶是否存在
+func (this *BoltDB) HasBucket(bucketName string) bool {
+	if bucketName == "" {
+		bucketName = "default"
+	}
+	bucket := []byte(bucketName)
+	has := false
+	fmt.Printf("bucket:%s\n", bucket)
+	this.db.Update(func(tx *bolt.Tx) error {
+		if b := tx.Bucket(bucket); b != nil {
+
+			has = true
+		}
+		return nil
+	})
+	return has
 }
 
 //添加/修改新的键值
@@ -76,11 +94,14 @@ func (this *BoltDB) GET(key []byte) (value []byte) {
 
 //查询指定桶中的所有键值
 func (this *BoltDB) GetAll(bucketName string) (datas []interface{}) {
+	fmt.Println("-----------------------------------------")
 	this.SetBucket(bucketName)
 	this.db.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
+		fmt.Printf("this bucket:%s\n", this.bucket)
 		b := tx.Bucket(this.bucket)
 		b.ForEach(func(k, v []byte) error { //遍历
+			fmt.Println("k:", k, ";v:", v)
 			kv := [][]byte{k, v}
 			datas = append(datas, kv)
 			return nil
