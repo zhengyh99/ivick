@@ -25,17 +25,17 @@ func OpenBoltDB(fileName string) *BoltDB {
 }
 
 //关闭数据库
-func (this *BoltDB) Close() {
-	this.db.Close()
+func (bDB *BoltDB) Close() {
+	bDB.db.Close()
 }
 
 //设置当前桶，有使用，无创建
-func (this *BoltDB) SetBucket(bucketName string) error {
+func (bDB *BoltDB) SetBucket(bucketName string) error {
 	if bucketName == "" {
 		bucketName = "default"
 	}
 	bucket := []byte(bucketName)
-	if err := this.db.Update(func(tx *bolt.Tx) error {
+	if err := bDB.db.Update(func(tx *bolt.Tx) error {
 		if _, err := tx.CreateBucketIfNotExists(bucket); err != nil { //判断桶是否存在，不存在建新
 			fmt.Println("create failed", err.Error())
 			return err
@@ -44,20 +44,20 @@ func (this *BoltDB) SetBucket(bucketName string) error {
 	}); err != nil {
 		fmt.Println("update error is:", err)
 	}
-	this.bucket = bucket
+	bDB.bucket = bucket
 	return nil
 
 }
 
 //判断桶是否存在
-func (this *BoltDB) HasBucket(bucketName string) bool {
+func (bDB *BoltDB) HasBucket(bucketName string) bool {
 	if bucketName == "" {
 		bucketName = "default"
 	}
 	bucket := []byte(bucketName)
 	has := false
 	fmt.Printf("bucket:%s\n", bucket)
-	this.db.Update(func(tx *bolt.Tx) error {
+	bDB.db.Update(func(tx *bolt.Tx) error {
 		if b := tx.Bucket(bucket); b != nil {
 
 			has = true
@@ -68,9 +68,9 @@ func (this *BoltDB) HasBucket(bucketName string) bool {
 }
 
 //添加/修改新的键值
-func (this *BoltDB) Put(key, value []byte) error {
-	if err := this.db.Update(func(tx *bolt.Tx) error {
-		b := tx.Bucket(this.bucket)
+func (bDB *BoltDB) Put(key, value []byte) error {
+	if err := bDB.db.Update(func(tx *bolt.Tx) error {
+		b := tx.Bucket(bDB.bucket)
 		err := b.Put(key, value) //添加 健值
 		return err
 	}); err != nil {
@@ -80,9 +80,9 @@ func (this *BoltDB) Put(key, value []byte) error {
 }
 
 //依键得值
-func (this *BoltDB) GET(key []byte) (value []byte) {
-	if err := this.db.View(func(tx *bolt.Tx) error {
-		b := tx.Bucket(this.bucket)
+func (bDB *BoltDB) GET(key []byte) (value []byte) {
+	if err := bDB.db.View(func(tx *bolt.Tx) error {
+		b := tx.Bucket(bDB.bucket)
 		value = b.Get(key) //依健查值
 		return nil
 	}); err != nil {
@@ -93,13 +93,13 @@ func (this *BoltDB) GET(key []byte) (value []byte) {
 }
 
 //查询指定桶中的所有键值
-func (this *BoltDB) GetAll(bucketName string) (datas []interface{}) {
+func (bDB *BoltDB) GetAll(bucketName string) (datas []interface{}) {
 	fmt.Println("-----------------------------------------")
-	this.SetBucket(bucketName)
-	this.db.View(func(tx *bolt.Tx) error {
+	bDB.SetBucket(bucketName)
+	bDB.db.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
-		fmt.Printf("this bucket:%s\n", this.bucket)
-		b := tx.Bucket(this.bucket)
+		fmt.Printf("bDB bucket:%s\n", bDB.bucket)
+		b := tx.Bucket(bDB.bucket)
 		b.ForEach(func(k, v []byte) error { //遍历
 			fmt.Println("k:", k, ";v:", v)
 			kv := [][]byte{k, v}

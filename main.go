@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"zoin/bc"
+	"zoin/boltUse"
 )
 
 func main() {
@@ -26,6 +27,16 @@ func main() {
 	// 	fmt.Printf("block hash: %x \n", block.Hash)
 	// 	fmt.Printf("block data %s \n", block.Data)
 	// }
+
+	db := boltUse.OpenBoltDB("blockChain.db")
+	ds := db.GetAll("blockChain")
+	for k, v := range ds {
+		fmt.Println("0000000000000000")
+		if value, ok := v.([][]byte); ok { //数据断言
+			fmt.Printf("第%v个数据：, [%s] is %s\n", k, value[0], value[1])
+		}
+	}
+	db.Close()
 
 	// db := boltUse.OpenBoltDB("testDB.db")
 	// //添加数据
