@@ -30,7 +30,7 @@ func (pow *ProofOfWork) Run() (hash []byte, nonce uint64) {
 		hash, tmpTarget = pow.block.GetHashAndTarget(nonce)
 
 		if tmpTarget.Cmp(pow.target) == -1 {
-			fmt.Printf("Nonce is reserch ,Hash :%x,Nonce :%v\n", hash, nonce)
+			fmt.Printf("Nonce is reserch ,Hash :%v,Nonce :%v\n", hash, nonce)
 			return
 		} else {
 			nonce++

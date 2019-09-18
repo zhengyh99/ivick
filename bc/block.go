@@ -71,6 +71,10 @@ func (block *Block) GetHashAndTarget(nonce uint64) ([]byte, big.Int) {
 	return hash[:], tmpInt
 }
 
+func (block *Block) toByte() []byte {
+	return []byte("hello world")
+}
+
 //生成创世块
 func GenesisBlock() *Block {
 	hash := sha256.Sum256([]byte("创世块"))
