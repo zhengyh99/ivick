@@ -1,13 +1,12 @@
 package bc
 
 import (
-	"fmt"
 	"zoin/boltUse"
 )
 
 const (
-	dbFile = "blockChain.db"
-	bucket = "blockChain"
+	dbFile     = "blockChain.db"
+	bucketName = "blockChain"
 )
 
 //定义区块链
@@ -17,10 +16,10 @@ type BlockChain struct {
 }
 
 func NewBlockChain() *BlockChain {
-	db := boltUse.OpenBoltDB(dbFile)
-	if db.HasBucket(bucket) == false {
+	db := boltUse.OpenBoltDB(dbFile, bucketName)
+	if db.HasBucket(bucketName) == false {
 		genesisBlock := GenesisBlock()
-		db.Put(genesisBlock.Hash, genesisBlock.toByte())
+		db.Put(genesisBlock.Hash, genesisBlock.Serialize())
 		db.Put([]byte("tail"), genesisBlock.Hash)
 	}
 	return &BlockChain{
@@ -35,7 +34,7 @@ func (bc *BlockChain) AddBlock(data string) {
 
 	//如果桶不存在，初始化区块链
 	block := NewBlock(data, db.GET([]byte("tail")))
-	db.Put(block.Hash, block.toByte())
+	db.Put(block.Hash, block.Serialize())
 	db.Put([]byte("tail"), block.Hash)
 	bc.tail = db.GET([]byte("tail"))
 }
@@ -46,22 +45,19 @@ func (bc *BlockChain) GetBlock(id []byte) (block []byte) {
 	return
 }
 
+func (bc *BlockChain) GetTail() (tail []byte) {
+	db := bc.Blocks
+	tail = db.GET([]byte("tail"))
+	return
+
+}
+
 func (bc *BlockChain) GetAll() []interface{} {
 
 	db := bc.Blocks
-	return db.GetAll(bucket)
+	return db.GetAll(bucketName)
 }
 
 func (bc *BlockChain) Close() {
 	bc.Blocks.Close()
-}
-
-func (bc *BlockChain) TestAdd() {
-	db := bc.Blocks
-	db.Put([]byte("nihao"), []byte("您好"))
-}
-func (bc *BlockChain) TestReq() {
-	db := bc.Blocks
-	r := db.GET([]byte("nihao"))
-	fmt.Printf("r:%s", r)
 }

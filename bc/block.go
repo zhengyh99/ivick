@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"crypto/sha256"
 	"encoding/binary"
+	"encoding/gob"
 	"fmt"
 	"math/big"
 	"time"
@@ -71,12 +72,26 @@ func (block *Block) GetHashAndTarget(nonce uint64) ([]byte, big.Int) {
 	return hash[:], tmpInt
 }
 
-func (block *Block) toByte() []byte {
-	return []byte("hello world")
-}
-
 //生成创世块
 func GenesisBlock() *Block {
 	hash := sha256.Sum256([]byte("创世块"))
 	return NewBlock("创世块", hash[:])
+}
+
+//序列化为[]byte
+func (block *Block) Serialize() []byte {
+	var buffer bytes.Buffer
+	encoder := gob.NewEncoder(&buffer)
+	encoder.Encode(block)
+	return buffer.Bytes()
+}
+
+//反序列化为Block 实例
+func DeSerliaze(data []byte) (block Block, err error) {
+	decoder := gob.NewDecoder(bytes.NewReader(data))
+	err = decoder.Decode(&block)
+	if err != nil {
+		return block, err
+	}
+	return block, nil
 }

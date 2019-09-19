@@ -12,7 +12,7 @@ type BoltDB struct {
 }
 
 //打开数据库文件
-func OpenBoltDB(fileName string) *BoltDB {
+func OpenBoltDB(fileName, bucketName string) *BoltDB {
 	boltdb, err := bolt.Open(fileName, 0600, nil)
 	if err != nil {
 		fmt.Println("bolt open error:", err)
@@ -20,7 +20,7 @@ func OpenBoltDB(fileName string) *BoltDB {
 	MyDB := &BoltDB{
 		db: boltdb,
 	}
-	MyDB.SetBucket("") //初始化桶
+	MyDB.SetBucket(bucketName) //初始化桶
 	return MyDB
 }
 
@@ -35,6 +35,11 @@ func (bDB *BoltDB) SetBucket(bucketName string) error {
 		bucketName = "default"
 	}
 	bucket := []byte(bucketName)
+	if bDB.HasBucket(bucketName) {
+		bDB.bucket = bucket
+		return nil
+	}
+
 	if err := bDB.db.Update(func(tx *bolt.Tx) error {
 		if _, err := tx.CreateBucketIfNotExists(bucket); err != nil { //判断桶是否存在，不存在建新
 			fmt.Println("create failed", err.Error())
@@ -56,7 +61,6 @@ func (bDB *BoltDB) HasBucket(bucketName string) bool {
 	}
 	bucket := []byte(bucketName)
 	has := false
-	fmt.Printf("bucket:%s\n", bucket)
 	bDB.db.Update(func(tx *bolt.Tx) error {
 		if b := tx.Bucket(bucket); b != nil {
 
@@ -94,14 +98,12 @@ func (bDB *BoltDB) GET(key []byte) (value []byte) {
 
 //查询指定桶中的所有键值
 func (bDB *BoltDB) GetAll(bucketName string) (datas []interface{}) {
-	fmt.Println("-----------------------------------------")
 	bDB.SetBucket(bucketName)
 	bDB.db.View(func(tx *bolt.Tx) error {
 		// Assume bucket exists and has keys
-		fmt.Printf("bDB bucket:%s\n", bDB.bucket)
 		b := tx.Bucket(bDB.bucket)
+		fmt.Println("bdb bucket", string(bDB.bucket))
 		b.ForEach(func(k, v []byte) error { //遍历
-			fmt.Println("k:", k, ";v:", v)
 			kv := [][]byte{k, v}
 			datas = append(datas, kv)
 			return nil

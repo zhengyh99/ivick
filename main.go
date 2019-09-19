@@ -3,40 +3,46 @@ package main
 import (
 	"fmt"
 	"zoin/bc"
-	"zoin/boltUse"
 )
 
 func main() {
+	// //测试 序列化
+	// block := bc.NewBlock("hahahaha", []byte("helloword"))
+	// enBlock := block.Serialize()
+	// b, err := bc.DeSerliaze(enBlock)
+	// if err != nil {
+	// 	fmt.Println("bc deseriaze error:", err)
+	// }
+	// fmt.Printf("b data:%s,privHash:%s", b.Data, b.PrivHash)
+
+	//测试blockChain中的 bolt数据操作
 	blockChain := bc.NewBlockChain()
 	blockChain.AddBlock("block1")
 	blockChain.AddBlock("block2")
 	//blockChain.GETBlock()
-	blockChain.TestAdd()
-	blockChain.TestReq()
 	datas := blockChain.GetAll()
+	fmt.Println("datas's len:", len(datas))
 	for k, v := range datas {
 		if value, ok := v.([][]byte); ok { //数据断言
-			fmt.Printf("第%v个数据：, [%s] is %s\n", k, value[0], value[1])
+
+			fmt.Printf("第%v个数据：, [%x] is %x\n", k, value[0], value[1])
 		}
 	}
+
 	blockChain.Close()
 
-	// for i, block := range blockChain.Blocks {
-	// 	fmt.Printf("=====当前区块高度 %d\n", i)
-	// 	fmt.Printf("block prevhash: %x \n", block.PrivHash)
-	// 	fmt.Printf("block hash: %x \n", block.Hash)
-	// 	fmt.Printf("block data %s \n", block.Data)
-	// }
+	//测试 boltUse db.go
+	// db := boltUse.OpenBoltDB("blockChain.db", "blockChain")
+	// ds := db.GET([]byte("tail"))
+	// fmt.Printf("ds:%v", ds)
+	// // for k, v := range ds {
+	// // 	fmt.Println("0000000000000000")
+	// // 	if value, ok := v.([][]byte); ok { //数据断言
+	// // 		fmt.Printf("第%v个数据：, [%s] is %s\n", k, value[0], value[1])
+	// // 	}
+	// // }
 
-	db := boltUse.OpenBoltDB("blockChain.db")
-	ds := db.GetAll("blockChain")
-	for k, v := range ds {
-		fmt.Println("0000000000000000")
-		if value, ok := v.([][]byte); ok { //数据断言
-			fmt.Printf("第%v个数据：, [%s] is %s\n", k, value[0], value[1])
-		}
-	}
-	db.Close()
+	// db.Close()
 
 	// db := boltUse.OpenBoltDB("testDB.db")
 	// //添加数据
@@ -50,15 +56,13 @@ func main() {
 	// v := db.GET([]byte("NiHao"))
 	// fmt.Printf("Key:nihao 's value:%s\n", v)
 	// //遍历默认桶中的键值对
-	// datas := db.GetAll("")
-	// for k, v := range datas {
+	// data := db.GetAll("")
+	// for k, v := range data {
 	// 	if value, ok := v.([][]byte); ok { //数据断言
 	// 		fmt.Printf("第%v个数据：, [%s] is %s\n", k, value[0], value[1])
 	// 	}
 
 	// }
-	// // isHas := db.HasBucket("sixi")
-	// // fmt.Println("isHas:", isHas)
 	// db.Close()
 
 }
