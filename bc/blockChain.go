@@ -5,8 +5,8 @@ import (
 )
 
 const (
-	dbFile     = "blockChain.db"
-	bucketName = "blockChain"
+	dbFile     = "blockChain.db" //数据库文件
+	bucketName = "blockChain"    //数据桶
 )
 
 //定义区块链
@@ -15,8 +15,10 @@ type BlockChain struct {
 	tail   []byte
 }
 
+//新建区块链
 func NewBlockChain() *BlockChain {
 	db := boltUse.OpenBoltDB(dbFile, bucketName)
+	//判断桶是否存在
 	if db.HasBucket(bucketName) == false {
 		genesisBlock := GenesisBlock()
 		db.Put(genesisBlock.Hash, genesisBlock.Serialize())
@@ -39,12 +41,14 @@ func (bc *BlockChain) AddBlock(data string) {
 	bc.tail = db.GET([]byte("tail"))
 }
 
-func (bc *BlockChain) GetBlock(id []byte) (block []byte) {
+//根据idHash 返回block
+func (bc *BlockChain) GetBlock(idHash []byte) (block []byte) {
 	db := bc.Blocks
-	block = db.GET(id)
+	block = db.GET(idHash)
 	return
 }
 
+//获取最后一个Block的Hash
 func (bc *BlockChain) GetTail() (tail []byte) {
 	db := bc.Blocks
 	tail = db.GET([]byte("tail"))
@@ -52,12 +56,14 @@ func (bc *BlockChain) GetTail() (tail []byte) {
 
 }
 
+//返回桶中所有数据
 func (bc *BlockChain) GetAll() []interface{} {
 
 	db := bc.Blocks
 	return db.GetAll(bucketName)
 }
 
+//关闭Bolt资源
 func (bc *BlockChain) Close() {
 	bc.Blocks.Close()
 }

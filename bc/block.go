@@ -31,7 +31,6 @@ func NewBlock(data string, prevBlockHash []byte) (block *Block) {
 		MerkelRoot: []byte{},
 		TimeStamp:  uint64(now.Unix()),
 		Difficulty: 0,
-		Hash:       []byte{},
 		Data:       []byte(data),
 	}
 	pow := NewProofOfWork(block)
