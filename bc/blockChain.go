@@ -16,11 +16,10 @@ type BlockChain struct {
 }
 
 //新建区块链
-func NewBlockChain() *BlockChain {
+func GetBlockChain() *BlockChain {
 	db := boltUse.OpenBoltDB(dbFile, bucketName)
-	//判断桶是否存在
-	if db.HasBucket(bucketName) == false {
-		genesisBlock := GenesisBlock()
+	if len(db.GET([]byte("tail"))) == 0 { //数据库中无数据
+		genesisBlock := GenesisBlock() //将创世块写入数据库
 		db.Put(genesisBlock.Hash, genesisBlock.Serialize())
 		db.Put([]byte("tail"), genesisBlock.Hash)
 	}
@@ -42,9 +41,10 @@ func (bc *BlockChain) AddBlock(data string) {
 }
 
 //根据idHash 返回block
-func (bc *BlockChain) GetBlock(idHash []byte) (block []byte) {
+func (bc *BlockChain) GetBlock(idHash []byte) (block Block, err error) {
 	db := bc.Blocks
-	block = db.GET(idHash)
+	b := db.GET(idHash)
+	block, err = DeSerialize(b)
 	return
 }
 

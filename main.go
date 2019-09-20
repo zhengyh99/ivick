@@ -15,21 +15,31 @@ func main() {
 	// }
 	// fmt.Printf("b data:%s,privHash:%s", b.Data, b.PrivHash)
 
-	//测试blockChain中的 bolt数据操作
-	blockChain := bc.NewBlockChain()
-	blockChain.AddBlock("block1")
-	blockChain.AddBlock("block2")
-	//blockChain.GETBlock()
-	datas := blockChain.GetAll()
-	fmt.Println("datas's len:", len(datas))
-	for k, v := range datas {
-		if value, ok := v.([][]byte); ok { //数据断言
+	// //测试blockChain中的 bolt数据操作
+	// blockChain := bc.GetBlockChain()
+	// blockChain.AddBlock("block3")
+	// blockChain.AddBlock("block4")
 
-			fmt.Printf("第%v个数据：, [%x] is %x\n", k, value[0], value[1])
-		}
+	// datas := blockChain.GetAll()
+	// for k, v := range datas {
+	// 	if value, ok := v.([][]byte); ok { //数据断言
+
+	// 		fmt.Printf("第%v个数据：, [%x] is %x\n", k, value[0], value[1])
+	// 	}
+	// }
+
+	// blockChain.Close()
+
+	//测试 BlockChainIter 迭代器
+	bc := bc.GetBlockChain()
+	for iter := bc.Iter(); iter.HasNext(); {
+		b := iter.Next()
+		fmt.Printf("b.PrivHash：%x\n", b.PrivHash)
+		fmt.Printf("b.Hash:%x \n", b.Hash)
+		fmt.Printf("b.daga:%s\n", b.Data)
+		fmt.Println("==========")
 	}
-
-	blockChain.Close()
+	bc.Close()
 
 	//测试 boltUse db.go
 	// db := boltUse.OpenBoltDB("blockChain.db", "blockChain")

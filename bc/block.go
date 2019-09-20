@@ -22,6 +22,10 @@ type Block struct {
 	Data       []byte
 }
 
+func sha256Hash(src []byte) [32]byte {
+	return sha256.Sum256(src)
+}
+
 //创建块
 func NewBlock(data string, prevBlockHash []byte) (block *Block) {
 	var now time.Time
@@ -65,7 +69,7 @@ func (block *Block) GetHashAndTarget(nonce uint64) ([]byte, big.Int) {
 		block.Data,
 	}
 	blockInfo := bytes.Join(tmp, []byte{})
-	hash := sha256.Sum256(blockInfo)
+	hash := sha256Hash(blockInfo)
 	tmpInt := big.Int{}
 	tmpInt.SetBytes(hash[:])
 	return hash[:], tmpInt
@@ -73,7 +77,7 @@ func (block *Block) GetHashAndTarget(nonce uint64) ([]byte, big.Int) {
 
 //生成创世块
 func GenesisBlock() *Block {
-	hash := sha256.Sum256([]byte("创世块"))
+	hash := sha256Hash([]byte("创世块"))
 	return NewBlock("创世块", hash[:])
 }
 
@@ -86,7 +90,7 @@ func (block *Block) Serialize() []byte {
 }
 
 //反序列化为Block 实例
-func DeSerliaze(data []byte) (block Block, err error) {
+func DeSerialize(data []byte) (block Block, err error) {
 	decoder := gob.NewDecoder(bytes.NewReader(data))
 	err = decoder.Decode(&block)
 	if err != nil {
