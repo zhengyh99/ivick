@@ -6,15 +6,6 @@ type BlockChainIter struct {
 	CurentBlock []byte      //当前区块hash
 }
 
-//创建迭代器
-func (bc *BlockChain) Iter() BlockChainIter {
-	return BlockChainIter{
-		BC:          bc,
-		CurentBlock: bc.GetTail(),
-	}
-
-}
-
 //迭代器下移
 func (iter *BlockChainIter) Next() Block {
 	block, err := iter.BC.GetBlock(iter.CurentBlock)

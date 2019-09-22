@@ -1,11 +1,15 @@
 package main
 
 import (
-	"fmt"
 	"zoin/bc"
 )
 
 func main() {
+
+	cli := bc.NewCLI()
+
+	cli.Run()
+
 	// //测试 序列化
 	// block := bc.NewBlock("hahahaha", []byte("helloword"))
 	// enBlock := block.Serialize()
@@ -31,15 +35,15 @@ func main() {
 	// blockChain.Close()
 
 	//测试 BlockChainIter 迭代器
-	bc := bc.GetBlockChain()
-	for iter := bc.Iter(); iter.HasNext(); {
-		b := iter.Next()
-		fmt.Printf("b.PrivHash：%x\n", b.PrivHash)
-		fmt.Printf("b.Hash:%x \n", b.Hash)
-		fmt.Printf("b.daga:%s\n", b.Data)
-		fmt.Println("==========")
-	}
-	bc.Close()
+	// bc := bc.GetBlockChain()
+	// for iter := blockChain.Iter(); iter.HasNext(); {
+	// 	b := iter.Next()
+	// 	fmt.Printf("b.PrivHash：%x\n", b.PrivHash)
+	// 	fmt.Printf("b.Hash:%x \n", b.Hash)
+	// 	fmt.Printf("b.daga:%s\n", b.Data)
+	// 	fmt.Println("==========")
+	// }
+	// blockChain.Close()
 
 	//测试 boltUse db.go
 	// db := boltUse.OpenBoltDB("blockChain.db", "blockChain")

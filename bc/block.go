@@ -19,24 +19,25 @@ type Block struct {
 	Difficulty uint64
 	Nonce      uint64
 	Hash       []byte
-	Data       []byte
+	TXs        []*Transaction
 }
 
-func sha256Hash(src []byte) [32]byte {
+//返回sha256 hash
+func Sha256Hash(src []byte) [32]byte {
 	return sha256.Sum256(src)
 }
 
 //创建块
-func NewBlock(data string, prevBlockHash []byte) (block *Block) {
+func NewBlock(txs []*Transaction, prevBlockHash []byte) (block *Block) {
 	var now time.Time
 	block = &Block{
 		Version:    0,
 		PrivHash:   prevBlockHash,
-		MerkelRoot: []byte{},
 		TimeStamp:  uint64(now.Unix()),
 		Difficulty: 0,
-		Data:       []byte(data),
+		TXs:        txs,
 	}
+	block.MakeMerkelRoot()
 	pow := NewProofOfWork(block)
 	hash, nonce := pow.Run()
 	block.Hash = hash
@@ -65,20 +66,24 @@ func (block *Block) GetHashAndTarget(nonce uint64) ([]byte, big.Int) {
 		block.uintToBytes(block.TimeStamp),
 		block.uintToBytes(block.Difficulty),
 		block.uintToBytes(nonce),
-		block.Hash,
-		block.Data,
 	}
 	blockInfo := bytes.Join(tmp, []byte{})
-	hash := sha256Hash(blockInfo)
+	hash := Sha256Hash(blockInfo)
 	tmpInt := big.Int{}
 	tmpInt.SetBytes(hash[:])
 	return hash[:], tmpInt
 }
 
+//计算梅克尔根
+func (block *Block) MakeMerkelRoot() {
+	//TODO
+	block.MerkelRoot = []byte{}
+}
+
 //生成创世块
-func GenesisBlock() *Block {
-	hash := sha256Hash([]byte("创世块"))
-	return NewBlock("创世块", hash[:])
+func GenesisBlock(address string) *Block {
+	cb := NewCoinBaseTX(address, "创世块证书")
+	return NewBlock([]*Transaction{cb}, []byte{})
 }
 
 //序列化为[]byte

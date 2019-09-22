@@ -1,6 +1,7 @@
 package bc
 
 import (
+	"fmt"
 	"zoin/boltUse"
 )
 
@@ -16,10 +17,10 @@ type BlockChain struct {
 }
 
 //新建区块链
-func GetBlockChain() *BlockChain {
+func GetBlockChain(address string) *BlockChain {
 	db := boltUse.OpenBoltDB(dbFile, bucketName)
 	if len(db.GET([]byte("tail"))) == 0 { //数据库中无数据
-		genesisBlock := GenesisBlock() //将创世块写入数据库
+		genesisBlock := GenesisBlock(address) //将创世块写入数据库
 		db.Put(genesisBlock.Hash, genesisBlock.Serialize())
 		db.Put([]byte("tail"), genesisBlock.Hash)
 	}
@@ -30,11 +31,11 @@ func GetBlockChain() *BlockChain {
 }
 
 //向区块链中加入区块
-func (bc *BlockChain) AddBlock(data string) {
+func (bc *BlockChain) AddBlock(txs []*Transaction) {
 	db := bc.Blocks
 
 	//如果桶不存在，初始化区块链
-	block := NewBlock(data, db.GET([]byte("tail")))
+	block := NewBlock(txs, db.GET([]byte("tail")))
 	db.Put(block.Hash, block.Serialize())
 	db.Put([]byte("tail"), block.Hash)
 	bc.tail = db.GET([]byte("tail"))
@@ -66,4 +67,38 @@ func (bc *BlockChain) GetAll() []interface{} {
 //关闭Bolt资源
 func (bc *BlockChain) Close() {
 	bc.Blocks.Close()
+}
+
+//创建迭代器
+func (bc *BlockChain) Iter() BlockChainIter {
+	return BlockChainIter{
+		BC:          bc,
+		CurentBlock: bc.GetTail(),
+	}
+
+}
+
+func (bc *BlockChain) FindUTXOs(address string) []TXOutput {
+	var UTXO []TXOutput
+	spentOutputs := make(map[string][]int64)
+	for iter := bc.Iter(); iter.HasNext(); {
+		b := iter.Next()
+		for _, tx := range b.TXs {
+			fmt.Printf("Current txid is %s\n", tx.TXID)
+			for i, output := range tx.TXOutputs {
+				fmt.Printf("Current index is %v\n", i)
+				if output.PubKeyHash == address {
+					UTXO = append(UTXO, output)
+				}
+			}
+
+			for _,input := range tx.TXInputs{
+				if input.Sig = address{
+					indexArray := spentOutputs[string(input.TXid)]
+					indexArray = append(indexArray,input.Index)
+				}
+			}
+		}
+	}
+	return UTXO
 }
