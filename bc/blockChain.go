@@ -83,19 +83,29 @@ func (bc *BlockChain) FindUTXOs(address string) []TXOutput {
 	spentOutputs := make(map[string][]int64)
 	for iter := bc.Iter(); iter.HasNext(); {
 		b := iter.Next()
+
 		for _, tx := range b.TXs {
 			fmt.Printf("Current txid is %s\n", tx.TXID)
+			//遍历output
+		OUTPUT:
 			for i, output := range tx.TXOutputs {
 				fmt.Printf("Current index is %v\n", i)
+				if spentOutputs[string(tx.TXID)] != nil {
+					for _, j := range spentOutputs[string(tx.TXID)] {
+						if int64(i) == j {
+							continue OUTPUT
+						}
+					}
+				}
 				if output.PubKeyHash == address {
 					UTXO = append(UTXO, output)
 				}
 			}
 
-			for _,input := range tx.TXInputs{
-				if input.Sig = address{
+			for _, input := range tx.TXInputs {
+				if input.Sig == address {
 					indexArray := spentOutputs[string(input.TXid)]
-					indexArray = append(indexArray,input.Index)
+					indexArray = append(indexArray, input.Index)
 				}
 			}
 		}

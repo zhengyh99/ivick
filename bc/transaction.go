@@ -16,7 +16,7 @@ type Transaction struct {
 
 //定义交易输入
 type TXInput struct {
-	TXid  []byte //引用交易ID
+	TXid  []byte //引用所在交易ID
 	Index int64  //引用output的索引值
 	Sig   string //解锁脚本
 }
@@ -27,6 +27,7 @@ type TXOutput struct {
 	PubKeyHash string  //锁定脚本
 }
 
+//Hash计算交易ID
 func (tx *Transaction) SetHash() {
 	var buffer bytes.Buffer
 	encoder := gob.NewEncoder(&buffer)
