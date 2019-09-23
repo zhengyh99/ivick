@@ -84,20 +84,28 @@ func (bc *BlockChain) FindUTXOs(address string) []TXOutput {
 	for iter := bc.Iter(); iter.HasNext(); {
 		b := iter.Next()
 		for _, tx := range b.TXs {
-			fmt.Printf("Current txid is %s\n", tx.TXID)
+			fmt.Printf("Current txid is %x\n", tx.TXID)
+		OUTPUT:
 			for i, output := range tx.TXOutputs {
 				fmt.Printf("Current index is %v\n", i)
+				for _, j := range spentOutputs[string(tx.TXID)] {
+					if int64(i) == j { //判断当前output 是否被前一交易的input 所引用（应用代表交易金额已经被花光）
+						continue OUTPUT
+					}
+				}
 				if output.PubKeyHash == address {
 					UTXO = append(UTXO, output)
 				}
 			}
-
-			for _,input := range tx.TXInputs{
-				if input.Sig = address{
-					indexArray := spentOutputs[string(input.TXid)]
-					indexArray = append(indexArray,input.Index)
+			if !tx.IsCoinBase() {
+				for _, input := range tx.TXInputs {
+					if input.Sig == address {
+						indexArray := spentOutputs[string(input.TXid)]
+						indexArray = append(indexArray, input.Index)
+					}
 				}
 			}
+
 		}
 	}
 	return UTXO
