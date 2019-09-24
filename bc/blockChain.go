@@ -85,30 +85,60 @@ func (bc *BlockChain) FindUTXOs(address string) []TXOutput {
 		b := iter.Next()
 
 		for _, tx := range b.TXs {
-			fmt.Printf("Current txid is %s\n", tx.TXID)
-			//遍历output
+			fmt.Printf("Current txid is %x\n", tx.TXID)
 		OUTPUT:
 			for i, output := range tx.TXOutputs {
 				fmt.Printf("Current index is %v\n", i)
-				if spentOutputs[string(tx.TXID)] != nil {
-					for _, j := range spentOutputs[string(tx.TXID)] {
-						if int64(i) == j {
-							continue OUTPUT
-						}
+				for _, j := range spentOutputs[string(tx.TXID)] {
+					if int64(i) == j { //判断当前output 是否被前一交易的input 所引用（应用代表交易金额已经被花光）
+						continue OUTPUT
 					}
 				}
 				if output.PubKeyHash == address {
 					UTXO = append(UTXO, output)
 				}
 			}
-
-			for _, input := range tx.TXInputs {
-				if input.Sig == address {
-					indexArray := spentOutputs[string(input.TXid)]
-					indexArray = append(indexArray, input.Index)
+			//判断是否为挖矿交易
+			if !tx.IsCoinBase() {
+				for _, input := range tx.TXInputs {
+					if input.Sig == address {
+						indexArray := spentOutputs[string(input.TXid)]
+						indexArray = append(indexArray, input.Index)
+					}
 				}
 			}
+
 		}
 	}
 	return UTXO
+}
+func (bc *BlockChain) FindFreeUTXOs(address string) (utxos map[string][]int64, balance float64) {
+	return
+}
+func (bc *BlockChain) NewTransaction(from, to string, amount float64) (tx *Transaction) {
+
+	utxos, balance := bc.FindFreeUTXOs(from)
+	if balance < amount {
+		fmt.Println("全额不足，交易失败")
+		return nil
+	}
+	inputs := tx.TXInputs
+	outputs := tx.TXOutputs
+
+	for txid, indexs := range utxos {
+		for _, i := range indexs {
+			input := TXInput{TXid: []byte(txid), Index: i, Sig: from}
+			inputs = append(inputs, input)
+		}
+	}
+	output := TXOutput{Value: amount, PubKeyHash: to}
+	outputs = append(outputs, output)
+	//找零
+	if balance > amount {
+		outputs = append(outputs, TXOutput{Value: balance - amount, PubKeyHash: from})
+	}
+	tx.SetHash()
+
+	return
+
 }

@@ -7,7 +7,7 @@ import (
 
 const reward = 12.5
 
-//定义交易结构
+//定义交易块结构
 type Transaction struct {
 	TXID      []byte     //交易ID
 	TXInputs  []TXInput  //交易输入数组
@@ -23,7 +23,7 @@ type TXInput struct {
 
 //定义交易输出
 type TXOutput struct {
-	value      float64 //转账金额
+	Value      float64 //转账金额
 	PubKeyHash string  //锁定脚本
 }
 
@@ -47,9 +47,25 @@ func NewCoinBaseTX(address, sig string) (tx *Transaction) {
 	//3、无需引用index
 	//4、无需指定签名，sig可同矿工自定义，一般填写矿工池的名称
 	input := TXInput{TXid: []byte{}, Index: -1, Sig: sig}
-	output := TXOutput{value: reward, PubKeyHash: address}
+	output := TXOutput{Value: reward, PubKeyHash: address}
 	tx = &Transaction{TXInputs: []TXInput{input}, TXOutputs: []TXOutput{output}}
 	tx.SetHash()
 	return
 
+}
+
+//判断是否为挖矿交易
+func (tx *Transaction) IsCoinBase() bool {
+	//挖矿交易的特点：
+	//1、只有一个input 和一个output
+	//2、无需引用交易id
+	//3、无需引用index
+	input := tx.TXInputs[0]
+	if !bytes.Equal(input.TXid, []byte{}) || input.Index != -1 {
+		if len(tx.TXInputs) > 1 {
+			return false
+		}
+	}
+
+	return true
 }
