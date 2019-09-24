@@ -112,14 +112,16 @@ func (bc *BlockChain) FindUTXOs(address string) []TXOutput {
 	}
 	return UTXO
 }
-func (bc *BlockChain) FindFreeUTXOs(address string) (utxos map[string][]int64, balance float64) {
+
+//查找需要UTXO，返回找到UTXO所在交易ID 和index切片 组成map 及 所得的金额总额
+func (bc *BlockChain) FindNeedUTXOs(address string, needAmount float64) (utxos map[string][]int64, balance float64) {
 	return
 }
-func (bc *BlockChain) NewTransaction(from, to string, amount float64) (tx *Transaction) {
+func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *Transaction) {
 
-	utxos, balance := bc.FindFreeUTXOs(from)
-	if balance < amount {
-		fmt.Println("全额不足，交易失败")
+	utxos, balance := bc.FindNeedUTXOs(from, needAmount)
+	if balance < needAmount {
+		fmt.Println("金额不足，交易失败")
 		return nil
 	}
 	inputs := tx.TXInputs
