@@ -22,34 +22,49 @@ type CLI struct {
 
 func NewCLI() (cli *CLI) {
 	cli = &CLI{
-		BC: GetBlockChain("创世块"),
+		BC: GetBlockChain("start"),
 	}
 	return
 }
-
+func (cli *CLI) Close() {
+	cli.BC.Close()
+}
 func (cli *CLI) printChain() {
 	bc := cli.BC
 	for iter := bc.Iter(); iter.HasNext(); {
 		b := iter.Next()
-		fmt.Printf("b.PrivHash：%x\n", b.PrivHash)
-		fmt.Printf("b.Hash:%x \n", b.Hash)
-		fmt.Printf("b.daga:%s\n", b.TXs[0].TXInputs[0].Sig)
-		fmt.Println("==========")
+		// fmt.Printf("b.PrivHash：%x\n", b.PrivHash)
+		// fmt.Printf("b.Hash:%x \n", b.Hash)
+		// fmt.Printf("b.data:%s\n", b.TXs[0].TXInputs[0].Sig)
+		for i, txs := range b.TXs {
+			fmt.Println("begin================")
+			fmt.Printf("第%v个交易，交易ID：%x\n-----------------\n\n", i, txs.TXID)
+			fmt.Println("inputs............")
+			for _, in := range txs.TXInputs {
+				fmt.Printf("txid:%x,index:%v,sig:%s\n", in.TXid, in.Index, in.Sig)
+			}
+			fmt.Println("........")
+			fmt.Println("outputs,,,,,,,,,,,,,,,,,,,,,,,,,,,,")
+			for _, out := range txs.TXOutputs {
+				fmt.Printf("pub:%s,values:%v\n", out.PubKeyHash, out.Value)
+			}
+			fmt.Println(",,,,,,,,,,,,,,,,,,,,,,,,,")
+			fmt.Println("end===============")
+		}
+
 	}
-	bc.Close()
+
 }
 
 func (cli *CLI) GetBalance(address string) {
-	utxo := cli.BC.FindUTXOs(address)
-	total := 0.0
-	for _, v := range utxo {
-		total = total + v.Value
-	}
+	_, total := cli.BC.FindUTXOs(address, -1)
+
 	fmt.Printf("地址：[%s] 的余额为：%.2f", address, total)
 }
 
 //send FROM TO AMOUNT MINER DATA	"由FROM转AMOUNT给TO，由MINER挖矿，同时写入DATA"
 func (cli *CLI) send(from, to string, amount float64, miner, data string) {
+	fmt.Println("from:", from, ",to:", to, ",amount:", amount, ",miner:", miner, ",data:", data)
 	tx := cli.BC.NewTransaction(from, to, amount)
 	if tx == nil {
 		fmt.Println("无效的交易")

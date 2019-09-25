@@ -78,28 +78,36 @@ func (bc *BlockChain) Iter() BlockChainIter {
 
 }
 
-func (bc *BlockChain) FindUTXOs(address string) []TXOutput {
-	var UTXO []TXOutput
+//查找指定金额：needAmount的UTXO（若needAmount==-1:代表查找全部UTXO）
+//返回找到UTXO所在交易ID 和index切片 组成map 及 所得的金额总额
+func (bc *BlockChain) FindUTXOs(address string, needAmount float64) (utxos map[string][]int64, balance float64) {
 	spentOutputs := make(map[string][]int64)
+	utxos = make(map[string][]int64)
+SUFFICIENT:
 	for iter := bc.Iter(); iter.HasNext(); {
 		b := iter.Next()
 
 		for _, tx := range b.TXs {
-			fmt.Printf("Current txid is %x\n", tx.TXID)
+			// fmt.Printf("Current txid is %x\n", tx.TXID)
 		OUTPUT:
 			for i, output := range tx.TXOutputs {
-				fmt.Printf("Current index is %v\n", i)
+				// fmt.Printf("Current index is %v\n", i)
 				for _, j := range spentOutputs[string(tx.TXID)] {
 					if int64(i) == j { //判断当前output 是否被前一交易的input 所引用（应用代表交易金额已经被花光）
 						continue OUTPUT
 					}
 				}
 				if output.PubKeyHash == address {
-					UTXO = append(UTXO, output)
+					balance = balance + output.Value
+					utxos[string(tx.TXID)] = append(utxos[string(tx.TXID)], int64(i))
+					//当金额充足时停止查找，退出整个循环
+					if balance >= needAmount && needAmount != -1 {
+						break SUFFICIENT
+					}
 				}
 			}
 			//判断是否为挖矿交易
-			if !tx.IsCoinBase() {
+			if tx.IsCoinBase() {
 				for _, input := range tx.TXInputs {
 					if input.Sig == address {
 						indexArray := spentOutputs[string(input.TXid)]
@@ -110,22 +118,20 @@ func (bc *BlockChain) FindUTXOs(address string) []TXOutput {
 
 		}
 	}
-	return UTXO
+	return
+
 }
 
-//查找需要UTXO，返回找到UTXO所在交易ID 和index切片 组成map 及 所得的金额总额
-func (bc *BlockChain) FindNeedUTXOs(address string, needAmount float64) (utxos map[string][]int64, balance float64) {
-	return
-}
+//新建普通交易 needAmount 交易成交所需要的金额
 func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *Transaction) {
 
-	utxos, balance := bc.FindNeedUTXOs(from, needAmount)
+	utxos, balance := bc.FindUTXOs(from, needAmount)
 	if balance < needAmount {
 		fmt.Println("金额不足，交易失败")
 		return nil
 	}
-	inputs := tx.TXInputs
-	outputs := tx.TXOutputs
+	var inputs []TXInput
+	var outputs []TXOutput
 
 	for txid, indexs := range utxos {
 		for _, i := range indexs {
@@ -133,13 +139,21 @@ func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *T
 			inputs = append(inputs, input)
 		}
 	}
-	output := TXOutput{Value: amount, PubKeyHash: to}
+	output := TXOutput{Value: needAmount, PubKeyHash: to}
 	outputs = append(outputs, output)
 	//找零
-	if balance > amount {
-		outputs = append(outputs, TXOutput{Value: balance - amount, PubKeyHash: from})
+	fmt.Println("balance:", balance, ",needAmount:", needAmount)
+	if balance > needAmount {
+		outputs = append(outputs, TXOutput{Value: balance - needAmount, PubKeyHash: from})
+	}
+	tx = &Transaction{
+		TXInputs:  inputs,
+		TXOutputs: outputs,
 	}
 	tx.SetHash()
+	// fmt.Println("tx=====", tx)
+	// fmt.Println("tx.input===", tx.TXInputs)
+	// fmt.Println("tx.output =====", tx.TXOutputs)
 
 	return
 

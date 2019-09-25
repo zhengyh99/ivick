@@ -60,12 +60,12 @@ func (tx *Transaction) IsCoinBase() bool {
 	//1、只有一个input 和一个output
 	//2、无需引用交易id
 	//3、无需引用index
-	input := tx.TXInputs[0]
-	if !bytes.Equal(input.TXid, []byte{}) || input.Index != -1 {
-		if len(tx.TXInputs) > 1 {
-			return false
+
+	if len(tx.TXInputs) == 1 {
+		input := tx.TXInputs[0]
+		if bytes.Equal(input.TXid, []byte{}) && input.Index == -1 {
+			return true
 		}
 	}
-
-	return true
+	return false
 }

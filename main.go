@@ -7,7 +7,7 @@ import (
 func main() {
 
 	cli := bc.NewCLI()
-
+	defer cli.Close()
 	cli.Run()
 
 	// //测试 序列化
