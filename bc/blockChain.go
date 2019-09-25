@@ -106,12 +106,14 @@ SUFFICIENT:
 					}
 				}
 			}
+
 			//判断是否为挖矿交易
-			if tx.IsCoinBase() {
+			if !tx.IsCoinBase() {
+
 				for _, input := range tx.TXInputs {
+
 					if input.Sig == address {
-						indexArray := spentOutputs[string(input.TXid)]
-						indexArray = append(indexArray, input.Index)
+						spentOutputs[string(input.TXid)] = append(spentOutputs[string(input.TXid)], input.Index)
 					}
 				}
 			}
@@ -142,7 +144,6 @@ func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *T
 	output := TXOutput{Value: needAmount, PubKeyHash: to}
 	outputs = append(outputs, output)
 	//找零
-	fmt.Println("balance:", balance, ",needAmount:", needAmount)
 	if balance > needAmount {
 		outputs = append(outputs, TXOutput{Value: balance - needAmount, PubKeyHash: from})
 	}

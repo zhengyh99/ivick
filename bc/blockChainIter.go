@@ -8,6 +8,7 @@ type BlockChainIter struct {
 
 //迭代器下移
 func (iter *BlockChainIter) Next() Block {
+
 	block, err := iter.BC.GetBlock(iter.CurentBlock)
 	if err != nil {
 		panic(err)
