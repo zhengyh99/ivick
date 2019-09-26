@@ -76,8 +76,12 @@ func (block *Block) GetHashAndTarget(nonce uint64) ([]byte, big.Int) {
 
 //计算梅克尔根
 func (block *Block) MakeMerkelRoot() {
-	//TODO
-	block.MerkelRoot = []byte{}
+	var txids []byte
+	for _, tx := range block.TXs {
+		txids = append(txids, tx.TXID...)
+	}
+	hash := Sha256Hash(txids)
+	block.MerkelRoot = hash[:]
 }
 
 //生成创世块

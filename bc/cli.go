@@ -9,7 +9,6 @@ import (
 const (
 	//命令说明
 	Usage = `
-addBlock --data DATA	"添加区块"
 printChain		"正向打印区块链"
 getBalance --address DATA	"获取指定地址的余额"
 send FROM TO AMOUNT MINER DATA	"由FROM转AMOUNT给TO，由MINER挖矿，同时写入DATA"
@@ -26,6 +25,7 @@ func NewCLI() (cli *CLI) {
 	}
 	return
 }
+//CLI执行完成后，需及时关闭，释放资源
 func (cli *CLI) Close() {
 	cli.BC.Close()
 }
@@ -33,22 +33,20 @@ func (cli *CLI) printChain() {
 	bc := cli.BC
 	for iter := bc.Iter(); iter.HasNext(); {
 		b := iter.Next()
-		// fmt.Printf("b.PrivHash：%x\n", b.PrivHash)
-		// fmt.Printf("b.Hash:%x \n", b.Hash)
-		// fmt.Printf("b.data:%s\n", b.TXs[0].TXInputs[0].Sig)
+		fmt.Printf("块ID :%x \n", b.Hash)
 		for i, txs := range b.TXs {
 			fmt.Println("begin================")
 			fmt.Printf("第%v个交易，交易ID：%x\n-----------------\n\n", i, txs.TXID)
-			fmt.Println("inputs............")
+			fmt.Println("inputs：{")
 			for _, in := range txs.TXInputs {
-				fmt.Printf("txid:%x,index:%v,sig:%s\n", in.TXid, in.Index, in.Sig)
+				fmt.Printf("txid:%x,\nindex:%v\n,sig:%s\n\n", in.TXid, in.Index, in.Sig)
 			}
-			fmt.Println("........")
-			fmt.Println("outputs,,,,,,,,,,,,,,,,,,,,,,,,,,,,")
+			fmt.Println("}")
+			fmt.Println("outputs：{")
 			for _, out := range txs.TXOutputs {
-				fmt.Printf("pub:%s,values:%v\n", out.PubKeyHash, out.Value)
+				fmt.Printf("pub:%s,\nvalues:%v\n\n", out.PubKeyHash, out.Value)
 			}
-			fmt.Println(",,,,,,,,,,,,,,,,,,,,,,,,,")
+			fmt.Println("}")
 			fmt.Println("end===============")
 		}
 
@@ -81,11 +79,6 @@ func (cli *CLI) Run() {
 		return
 	}
 	switch args[1] {
-	case "addBlock":
-		if len(args) == 4 && args[2] == "--data" {
-			//cli.BC.AddBlock(args[3])
-			fmt.Println("块数据添加成功")
-		}
 	case "getBalance":
 		if len(args) == 4 && args[2] == "--address" {
 			cli.GetBalance(args[3])

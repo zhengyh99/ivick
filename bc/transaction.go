@@ -35,6 +35,7 @@ func (tx *Transaction) SetHash() {
 	if err != nil {
 		panic(err)
 	}
+	//将序列化的Transaction对象Hash
 	data := Sha256Hash(buffer.Bytes())
 	tx.TXID = data[:]
 }

@@ -70,8 +70,8 @@ func (bc *BlockChain) Close() {
 }
 
 //创建迭代器
-func (bc *BlockChain) Iter() BlockChainIter {
-	return BlockChainIter{
+func (bc *BlockChain) Iter() *BlockChainIter {
+	return &BlockChainIter{
 		BC:          bc,
 		CurentBlock: bc.GetTail(),
 	}
@@ -152,10 +152,5 @@ func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *T
 		TXOutputs: outputs,
 	}
 	tx.SetHash()
-	// fmt.Println("tx=====", tx)
-	// fmt.Println("tx.input===", tx.TXInputs)
-	// fmt.Println("tx.output =====", tx.TXOutputs)
-
 	return
-
 }
