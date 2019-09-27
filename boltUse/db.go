@@ -1,8 +1,8 @@
 package boltUse
 
 import (
-	"bolt"
 	"fmt"
+	"z/bolt"
 )
 
 //定义结构体

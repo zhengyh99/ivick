@@ -2,9 +2,7 @@ package bc
 
 import (
 	"bytes"
-	"crypto/sha256"
 	"encoding/binary"
-	"encoding/gob"
 	"fmt"
 	"math/big"
 	"time"
@@ -20,11 +18,6 @@ type Block struct {
 	Nonce      uint64
 	Hash       []byte
 	TXs        []*Transaction
-}
-
-//返回sha256 hash
-func Sha256Hash(src []byte) [32]byte {
-	return sha256.Sum256(src)
 }
 
 //创建块
@@ -92,18 +85,5 @@ func GenesisBlock(address string) *Block {
 
 //序列化为[]byte
 func (block *Block) Serialize() []byte {
-	var buffer bytes.Buffer
-	encoder := gob.NewEncoder(&buffer)
-	encoder.Encode(block)
-	return buffer.Bytes()
-}
-
-//反序列化为Block 实例
-func DeSerialize(data []byte) (block Block, err error) {
-	decoder := gob.NewDecoder(bytes.NewReader(data))
-	err = decoder.Decode(&block)
-	if err != nil {
-		return block, err
-	}
-	return block, nil
+	return Serialize(block)
 }

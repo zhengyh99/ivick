@@ -12,6 +12,7 @@ const (
 printChain		"正向打印区块链"
 getBalance --address DATA	"获取指定地址的余额"
 send FROM TO AMOUNT MINER DATA	"由FROM转AMOUNT给TO，由MINER挖矿，同时写入DATA"
+newWallet		"获取新钱包"
 `
 )
 
@@ -25,6 +26,7 @@ func NewCLI() (cli *CLI) {
 	}
 	return
 }
+
 //CLI执行完成后，需及时关闭，释放资源
 func (cli *CLI) Close() {
 	cli.BC.Close()
@@ -62,7 +64,7 @@ func (cli *CLI) GetBalance(address string) {
 
 //send FROM TO AMOUNT MINER DATA	"由FROM转AMOUNT给TO，由MINER挖矿，同时写入DATA"
 func (cli *CLI) send(from, to string, amount float64, miner, data string) {
-	fmt.Println("from:", from, ",to:", to, ",amount:", amount, ",miner:", miner, ",data:", data)
+	//fmt.Println("from:", from, ",to:", to, ",amount:", amount, ",miner:", miner, ",data:", data)
 	tx := cli.BC.NewTransaction(from, to, amount)
 	if tx == nil {
 		fmt.Println("无效的交易")
@@ -73,12 +75,12 @@ func (cli *CLI) send(from, to string, amount float64, miner, data string) {
 	fmt.Println("转账成功")
 }
 
-func (cli *CLI) NewWallet(){
+func (cli *CLI) NewWallet() {
 	wallet := NewWallet()
-	address:= wallet.NewAddres()
-	fmt.Printf(" 公钥 ：%x"，wallet.PublicKey)
-	fmt.Printf(" 私钥 ：%x"，wallet.PrivateKey)
-	fmt.Printf(" 地址 ：%x"，address)
+	address := wallet.NewAddres()
+	fmt.Printf(" 公钥 ：%v\n", wallet.PublicKey)
+	fmt.Printf(" 私钥 ：%v\n", wallet.PrivateKey)
+	fmt.Printf(" 地址 ：%s\n", address)
 }
 func (cli *CLI) Run() {
 	args := os.Args
@@ -87,6 +89,8 @@ func (cli *CLI) Run() {
 		return
 	}
 	switch args[1] {
+	case "newWallet":
+		cli.NewWallet()
 	case "getBalance":
 		if len(args) == 4 && args[2] == "--address" {
 			cli.GetBalance(args[3])
