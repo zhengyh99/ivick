@@ -5,6 +5,7 @@ import (
 	"crypto/sha256"
 	"encoding/gob"
 	"fmt"
+	"os"
 
 	"golang.org/x/crypto/ripemd160"
 )
@@ -46,4 +47,10 @@ func DeSerialize(data []byte, e interface{}) (err error) {
 //gob编码注册被编码数据不的interface
 func RegSerialize(value interface{}) {
 	gob.Register(value)
+}
+
+//判断文件或目录 文件路径是否存在
+func PathExists(path string) bool {
+	_, err := os.Stat(path)
+	return err == nil || os.IsExist(err)
 }

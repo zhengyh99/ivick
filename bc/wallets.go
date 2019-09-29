@@ -40,6 +40,11 @@ func (ws *Wallets) saveToFile() {
 }
 
 func (ws *Wallets) loadFile() {
+	if !PathExists(walletsFile) {
+		ws.WS = make(map[string]*Wallet)
+		return
+
+	}
 	f, err := ioutil.ReadFile(walletsFile)
 	if err != nil {
 		fmt.Println("ioutil read file error：", err)
