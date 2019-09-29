@@ -34,11 +34,16 @@ func Serialize(e interface{}) []byte {
 }
 
 //反序列化为Block 实例
-func DeSerialize(data []byte) (e interface{}, err error) {
+func DeSerialize(data []byte, e interface{}) (err error) {
 	decoder := gob.NewDecoder(bytes.NewReader(data))
 	err = decoder.Decode(e)
 	if err != nil {
-		return e, err
+		return
 	}
-	return e, nil
+	return
+}
+
+//gob编码注册被编码数据不的interface
+func RegSerialize(value interface{}) {
+	gob.Register(value)
 }

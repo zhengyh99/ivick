@@ -1,7 +1,6 @@
 package bc
 
 import (
-	"errors"
 	"fmt"
 	"zoin/boltUse"
 )
@@ -46,18 +45,11 @@ func (bc *BlockChain) AddBlock(txs []*Transaction) {
 func (bc *BlockChain) GetBlock(idHash []byte) (block Block, err error) {
 	db := bc.Blocks
 	b := db.GET(idHash)
-	e, err1 := DeSerialize(b)
+	err1 := DeSerialize(b, block)
 	if err1 != nil {
 		err = err1
 		fmt.Println("deserialize error:", err)
 		return
-	}
-	block, ok := e.(Block)
-	if !ok {
-		err = errors.New("interface to Block error")
-		fmt.Println("interface to Block error")
-		return
-
 	}
 
 	return
