@@ -20,12 +20,18 @@ func NewWallets() (ws *Wallets) {
 	return
 }
 
-func (ws *Wallets) CreateWallet() string {
-	w := NewWallet()
-	address := w.NewAddres()
-	ws.WS[address] = w
+func (ws *Wallets) CreateWallet() (address string, wallet *Wallet) {
+	wallet = NewWallet()
+	address = wallet.NewAddres()
+	ws.WS[address] = wallet
 	ws.saveToFile()
-	return address
+	return
+}
+
+// 根据 地址找到wallet 如果没有返回nil
+func (ws *Wallets) FindByAddress(address string) (wallet *Wallet) {
+	wallet = ws.WS[address]
+	return
 }
 
 func (ws *Wallets) saveToFile() {
@@ -56,4 +62,12 @@ func (ws *Wallets) loadFile() {
 		fmt.Println(" deserialize error：", err1)
 	}
 	ws.WS = wsTemp.WS
+}
+
+func (ws *Wallets) ListAddress() (addresses []string) {
+
+	for key := range ws.WS {
+		addresses = append(addresses, key)
+	}
+	return
 }

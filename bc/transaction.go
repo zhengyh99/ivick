@@ -16,15 +16,31 @@ type Transaction struct {
 
 //定义交易输入
 type TXInput struct {
-	TXid  []byte //引用所在交易ID
-	Index int64  //引用output的索引值
-	Sig   string //解锁脚本
+	TXid      []byte //引用所在交易ID
+	Index     int64  //引用output的索引值
+	Signature []byte //真正的数字签名 由r s拼成的[]byte
+	PubKey    []byte //公钥
 }
 
 //定义交易输出
 type TXOutput struct {
 	Value      float64 //转账金额
-	PubKeyHash string  //锁定脚本
+	PubKeyHash []byte  //收款方的公钥HASH
+}
+
+func NewTXOutput(address string, value float64) (output *TXOutput) {
+	output = &TXOutput{
+		Value: value,
+	}
+	output.Lock(address)
+	return
+}
+
+//锁定公钥HASH
+func (output TXOutput) Lock(address string) {
+
+	output.PubKeyHash = AddrToPubKeyHash(address)
+
 }
 
 //Hash计算交易ID
@@ -41,15 +57,15 @@ func (tx *Transaction) SetHash() {
 }
 
 //提供挖矿交易方法
-func NewCoinBaseTX(address, sig string) (tx *Transaction) {
+func NewCoinBaseTX(address, data string) (tx *Transaction) {
 	//挖矿交易的特点：
 	//1、只有一个input 和一个output
 	//2、无需引用交易id
 	//3、无需引用index
 	//4、无需指定签名，sig可同矿工自定义，一般填写矿工池的名称
-	input := TXInput{TXid: []byte{}, Index: -1, Sig: sig}
-	output := TXOutput{Value: reward, PubKeyHash: address}
-	tx = &Transaction{TXInputs: []TXInput{input}, TXOutputs: []TXOutput{output}}
+	input := TXInput{TXid: []byte{}, Index: -1, Signature: nil, PubKey: []byte(data)}
+	output := NewTXOutput(address, reward)
+	tx = &Transaction{TXInputs: []TXInput{input}, TXOutputs: []TXOutput{*output}}
 	tx.SetHash()
 	return
 

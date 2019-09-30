@@ -1,19 +1,18 @@
 package main
 
-import (
-	"fmt"
-	"zoin/bc"
-)
+import "zoin/bc"
 
 func main() {
+	cli := bc.NewCLI()
+	defer cli.Close()
+	cli.Run()
 
-	ws := bc.NewWallets()
-	addr := ws.CreateWallet()
-	fmt.Println("address:", addr)
-
-	// cli := bc.NewCLI()
-	// defer cli.Close()
-	// cli.Run()
+	////测试钱包
+	// ws := bc.NewWallets()
+	// addr := ws.CreateWallet()
+	// fmt.Println("address:", addr)
+	// addres := ws.ListAddress()
+	// fmt.Println("addr list ", addres)
 
 	// //测试 序列化
 	// block := bc.NewBlock("hahahaha", []byte("helloword"))

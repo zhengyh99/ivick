@@ -13,6 +13,7 @@ printChain		"正向打印区块链"
 getBalance --address DATA	"获取指定地址的余额"
 send FROM TO AMOUNT MINER DATA	"由FROM转AMOUNT给TO，由MINER挖矿，同时写入DATA"
 newWallet		"获取新钱包"
+listWallet		"返回钱包地址列表"
 `
 )
 
@@ -41,7 +42,7 @@ func (cli *CLI) printChain() {
 			fmt.Printf("第%v个交易，交易ID：%x\n-----------------\n\n", i, txs.TXID)
 			fmt.Println("inputs：{")
 			for _, in := range txs.TXInputs {
-				fmt.Printf("txid:%x,\nindex:%v\n,sig:%s\n\n", in.TXid, in.Index, in.Sig)
+				fmt.Printf("txid:%x,\nindex:%v\n,sig:%x\n\n", in.TXid, in.Index, in.PubKey)
 			}
 			fmt.Println("}")
 			fmt.Println("outputs：{")
@@ -57,8 +58,7 @@ func (cli *CLI) printChain() {
 }
 
 func (cli *CLI) GetBalance(address string) {
-	_, total := cli.BC.FindUTXOs(address, -1)
-
+	_, total := cli.BC.FindUTXOs(AddrToPubKeyHash(address), -1)
 	fmt.Printf("地址：[%s] 的余额为：%.2f", address, total)
 }
 
@@ -76,11 +76,19 @@ func (cli *CLI) send(from, to string, amount float64, miner, data string) {
 }
 
 func (cli *CLI) NewWallet() {
-	wallet := NewWallet()
-	address := wallet.NewAddres()
+	ws := NewWallets()
+	address, wallet := ws.CreateWallet()
 	fmt.Printf(" 公钥 ：%v\n", wallet.PublicKey)
 	fmt.Printf(" 私钥 ：%v\n", wallet.PrivateKey)
 	fmt.Printf(" 地址 ：%s\n", address)
+}
+func (cli *CLI) ListWallet() {
+	ws := NewWallets()
+	fmt.Println("打印地址列表。。。。。")
+	for _, addr := range ws.ListAddress() {
+		fmt.Printf("address :[%s]\n", addr)
+
+	}
 }
 func (cli *CLI) Run() {
 	args := os.Args
@@ -91,6 +99,8 @@ func (cli *CLI) Run() {
 	switch args[1] {
 	case "newWallet":
 		cli.NewWallet()
+	case "listWallet":
+		cli.ListWallet()
 	case "getBalance":
 		if len(args) == 4 && args[2] == "--address" {
 			cli.GetBalance(args[3])

@@ -1,6 +1,7 @@
 package bc
 
 import (
+	"bytes"
 	"fmt"
 	"zoin/boltUse"
 )
@@ -86,7 +87,7 @@ func (bc *BlockChain) Iter() *BlockChainIter {
 
 //查找指定金额：needAmount的UTXO（若needAmount==-1:代表查找全部UTXO）
 //返回找到UTXO所在交易ID 和index切片 组成map 及 所得的金额总额
-func (bc *BlockChain) FindUTXOs(address string, needAmount float64) (utxos map[string][]int64, balance float64) {
+func (bc *BlockChain) FindUTXOs(pubKeyHash []byte, needAmount float64) (utxos map[string][]int64, balance float64) {
 	spentOutputs := make(map[string][]int64)
 	utxos = make(map[string][]int64)
 SUFFICIENT:
@@ -103,7 +104,7 @@ SUFFICIENT:
 						continue OUTPUT
 					}
 				}
-				if output.PubKeyHash == address {
+				if bytes.Equal(output.PubKeyHash, pubKeyHash) {
 					balance = balance + output.Value
 					utxos[string(tx.TXID)] = append(utxos[string(tx.TXID)], int64(i))
 					//当金额充足时停止查找，退出整个循环
@@ -118,7 +119,7 @@ SUFFICIENT:
 
 				for _, input := range tx.TXInputs {
 
-					if input.Sig == address {
+					if bytes.Equal(HashPubKey(input.PubKey), pubKeyHash) {
 						spentOutputs[string(input.TXid)] = append(spentOutputs[string(input.TXid)], input.Index)
 					}
 				}
@@ -132,8 +133,14 @@ SUFFICIENT:
 
 //新建普通交易 needAmount 交易成交所需要的金额
 func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *Transaction) {
+	ws := NewWallets()
+	if ws == nil {
+		fmt.Println("地址不存在")
+		return nil
+	}
+	wallet := ws.FindByAddress(from)
 
-	utxos, balance := bc.FindUTXOs(from, needAmount)
+	utxos, balance := bc.FindUTXOs(HashPubKey(wallet.PublicKey), needAmount)
 	if balance < needAmount {
 		fmt.Println("金额不足，交易失败")
 		return nil
@@ -143,15 +150,15 @@ func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *T
 
 	for txid, indexs := range utxos {
 		for _, i := range indexs {
-			input := TXInput{TXid: []byte(txid), Index: i, Sig: from}
+			input := TXInput{TXid: []byte(txid), Index: i, Signature: nil, PubKey: wallet.PublicKey}
 			inputs = append(inputs, input)
 		}
 	}
-	output := TXOutput{Value: needAmount, PubKeyHash: to}
-	outputs = append(outputs, output)
+	output := NewTXOutput(to, needAmount)
+	outputs = append(outputs, *output)
 	//找零
 	if balance > needAmount {
-		outputs = append(outputs, TXOutput{Value: balance - needAmount, PubKeyHash: from})
+		outputs = append(outputs, TXOutput{Value: balance - needAmount, PubKeyHash: HashPubKey(wallet.PublicKey)})
 	}
 	tx = &Transaction{
 		TXInputs:  inputs,

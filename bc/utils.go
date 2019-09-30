@@ -6,6 +6,7 @@ import (
 	"encoding/gob"
 	"fmt"
 	"os"
+	"z/btcutil/base58"
 
 	"golang.org/x/crypto/ripemd160"
 )
@@ -53,4 +54,12 @@ func RegSerialize(value interface{}) {
 func PathExists(path string) bool {
 	_, err := os.Stat(path)
 	return err == nil || os.IsExist(err)
+}
+
+//地址转public key hash
+func AddrToPubKeyHash(address string) (pubKeyHash []byte) {
+	addrBytes := base58.Decode(address)
+	len := len(addrBytes)
+	pubKeyHash = addrBytes[1 : len-4]
+	return
 }
