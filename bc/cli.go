@@ -17,13 +17,17 @@ listWallet		"返回钱包地址列表"
 `
 )
 
+//定义 CLI结构体
 type CLI struct {
-	BC *BlockChain
+	BC *BlockChain //区块链结构体
 }
 
+//初始化 CLI
 func NewCLI() (cli *CLI) {
+
 	cli = &CLI{
-		BC: GetBlockChain("start"),
+		//获取区块链
+		BC: GetBlockChain("1J3s78ZVwXSG1JAq6Q2DbNV7hHyL68fij3"),
 	}
 	return
 }
@@ -32,45 +36,53 @@ func NewCLI() (cli *CLI) {
 func (cli *CLI) Close() {
 	cli.BC.Close()
 }
+
+//打印区块链体
 func (cli *CLI) printChain() {
 	bc := cli.BC
 	for iter := bc.Iter(); iter.HasNext(); {
 		b := iter.Next()
-		fmt.Printf("块ID :%x \n", b.Hash)
-		for i, txs := range b.TXs {
-			fmt.Println("begin================")
-			fmt.Printf("第%v个交易，交易ID：%x\n-----------------\n\n", i, txs.TXID)
-			fmt.Println("inputs：{")
-			for _, in := range txs.TXInputs {
-				fmt.Printf("txid:%x,\nindex:%v\n,sig:%x\n\n", in.TXid, in.Index, in.PubKey)
-			}
-			fmt.Println("}")
-			fmt.Println("outputs：{")
-			for _, out := range txs.TXOutputs {
-				fmt.Printf("pub:%s,\nvalues:%v\n\n", out.PubKeyHash, out.Value)
-			}
-			fmt.Println("}")
-			fmt.Println("end===============")
+		fmt.Printf("\n\n====---====块ID :%x \n", b.Hash)
+		for _, tx := range b.TXs {
+			fmt.Println(tx)
+
 		}
 
 	}
 
 }
 
+//获取指定地址余额
 func (cli *CLI) GetBalance(address string) {
+	if !IsValidAddress(address) {
+		fmt.Printf("无效的地址：【%s】\n", address)
+		return
+	}
 	_, total := cli.BC.FindUTXOs(AddrToPubKeyHash(address), -1)
 	fmt.Printf("地址：[%s] 的余额为：%.2f", address, total)
 }
 
 //send FROM TO AMOUNT MINER DATA	"由FROM转AMOUNT给TO，由MINER挖矿，同时写入DATA"
 func (cli *CLI) send(from, to string, amount float64, miner, data string) {
-	//fmt.Println("from:", from, ",to:", to, ",amount:", amount, ",miner:", miner, ",data:", data)
-	tx := cli.BC.NewTransaction(from, to, amount)
+	//判断 from,to,miner三个地址是否合法
+	if !IsValidAddress(from) {
+		fmt.Printf("无效的地址：【%s】\n", from)
+		return
+	}
+	if !IsValidAddress(to) {
+		fmt.Printf("无效的地址：【%s】\n", to)
+		return
+	}
+	if !IsValidAddress(miner) {
+		fmt.Printf("无效的地址：【%s】\n", miner)
+		return
+	}
+	tx := cli.BC.NewTransaction(from, to, amount) //转账交易
 	if tx == nil {
 		fmt.Println("无效的交易")
 		return
 	}
-	cbTx := NewCoinBaseTX(miner, data)
+	cbTx := NewCoinBaseTX(miner, data) //挖矿交易
 	cli.BC.AddBlock([]*Transaction{tx, cbTx})
 	fmt.Println("转账成功")
 }

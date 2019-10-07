@@ -2,6 +2,7 @@ package bc
 
 import (
 	"bytes"
+	"crypto/ecdsa"
 	"fmt"
 	"zoin/boltUse"
 )
@@ -33,23 +34,32 @@ func GetBlockChain(address string) *BlockChain {
 
 //向区块链中加入区块
 func (bc *BlockChain) AddBlock(txs []*Transaction) {
+	//交易签名检验
+	for _, tx := range txs {
+		// fmt.Println(tx)
+		// fmt.Println("====\n====")
+		if !bc.VerifyTransaction(tx) {
+			fmt.Println("矿工发现交易验证失败！！！")
+			return
+		}
+	}
 	db := bc.Blocks
 
 	//如果桶不存在，初始化区块链
 	block := NewBlock(txs, db.GET([]byte("tail")))
+	//写入数据库
 	db.Put(block.Hash, block.Serialize())
 	db.Put([]byte("tail"), block.Hash)
-	bc.tail = db.GET([]byte("tail"))
+	bc.tail = db.GET([]byte("tail")) //读取区块链尾
 }
 
 //根据idHash 返回block
-func (bc *BlockChain) GetBlock(idHash []byte) (block Block, err error) {
+func (bc *BlockChain) GetBlock(idHash []byte) (block *Block, err error) {
 	db := bc.Blocks
 	b := db.GET(idHash)
-	err1 := DeSerialize(b, block)
+	err1 := DeSerialize(b, &block)
 	if err1 != nil {
 		err = err1
-		fmt.Println("deserialize error:", err)
 		return
 	}
 
@@ -114,7 +124,7 @@ SUFFICIENT:
 				}
 			}
 
-			//判断是否为挖矿交易
+			//挖矿交易，不执行
 			if !tx.IsCoinBase() {
 
 				for _, input := range tx.TXInputs {
@@ -139,7 +149,7 @@ func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *T
 		return nil
 	}
 	wallet := ws.FindByAddress(from)
-
+	//查找可用金额(即余额) balance
 	utxos, balance := bc.FindUTXOs(HashPubKey(wallet.PublicKey), needAmount)
 	if balance < needAmount {
 		fmt.Println("金额不足，交易失败")
@@ -147,16 +157,17 @@ func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *T
 	}
 	var inputs []TXInput
 	var outputs []TXOutput
-
+	//创建 TXInput
 	for txid, indexs := range utxos {
 		for _, i := range indexs {
 			input := TXInput{TXid: []byte(txid), Index: i, Signature: nil, PubKey: wallet.PublicKey}
 			inputs = append(inputs, input)
 		}
 	}
+	//创建 TXOutput
 	output := NewTXOutput(to, needAmount)
 	outputs = append(outputs, *output)
-	//找零
+	//找零交易,播放TXOutput
 	if balance > needAmount {
 		outputs = append(outputs, TXOutput{Value: balance - needAmount, PubKeyHash: HashPubKey(wallet.PublicKey)})
 	}
@@ -164,6 +175,56 @@ func (bc *BlockChain) NewTransaction(from, to string, needAmount float64) (tx *T
 		TXInputs:  inputs,
 		TXOutputs: outputs,
 	}
+	//生成TXID
 	tx.SetHash()
+	//生成交易签名
+	bc.SignTransaction(tx, wallet.PrivateKey)
 	return
+}
+
+//根据TXID查找Transaction
+func (bc *BlockChain) FindTransactionByTXID(txid []byte) *Transaction {
+	for iter := bc.Iter(); iter.HasNext(); {
+		block := iter.Next()
+		for _, tx := range block.TXs {
+			if bytes.Equal(tx.TXID, txid) {
+				return tx
+			}
+		}
+	}
+	//未找到
+	return nil
+}
+
+//生成交易签名
+func (bc *BlockChain) SignTransaction(tx *Transaction, privetKey *ecdsa.PrivateKey) {
+	prevTXs := make(map[string]Transaction)
+	//找出交易中所有的input交易中TXID，对应该的交易，填入map
+	for _, input := range tx.TXInputs {
+		t := bc.FindTransactionByTXID(input.TXid)
+		if t != nil {
+			prevTXs[string(input.TXid)] = *t
+		}
+	}
+	//生成签名
+	tx.Sign(privetKey, prevTXs)
+
+}
+
+//检验交易签名
+func (bc *BlockChain) VerifyTransaction(tx *Transaction) bool {
+	//挖矿交易直接路过校验返回true
+	if tx.IsCoinBase() {
+		return true
+	}
+	prevTXs := make(map[string]Transaction)
+	//找出交易中所有的input交易中TXID，对应该的交易，填入map
+	for _, input := range tx.TXInputs {
+		t := bc.FindTransactionByTXID(input.TXid)
+		if t != nil {
+			prevTXs[string(input.TXid)] = *t
+		}
+	}
+	//返回检验结果
+	return tx.Verify(prevTXs)
 }

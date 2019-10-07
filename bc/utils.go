@@ -63,3 +63,23 @@ func AddrToPubKeyHash(address string) (pubKeyHash []byte) {
 	pubKeyHash = addrBytes[1 : len-4]
 	return
 }
+
+//将数据进行二次hash 返回前四个byte
+func DoubleHash4(data []byte) []byte {
+	hash1 := Sha256Hash(data)
+	hash2 := Sha256Hash(hash1[:])
+	return hash2[:4]
+}
+
+//验证地址的有效性
+func IsValidAddress(address string) bool {
+	addrBytes := base58.Decode(address)
+	if len(addrBytes) < 4 {
+		return false
+	}
+	payLoad := addrBytes[:len(addrBytes)-4]
+	checkCode1 := addrBytes[len(addrBytes)-4:]
+	checkCode2 := DoubleHash4(payLoad)
+	return bytes.Equal(checkCode1, checkCode2)
+
+}

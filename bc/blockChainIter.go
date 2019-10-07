@@ -7,8 +7,7 @@ type BlockChainIter struct {
 }
 
 //迭代器下移
-func (iter *BlockChainIter) Next() Block {
-
+func (iter *BlockChainIter) Next() *Block {
 	block, err := iter.BC.GetBlock(iter.CurentBlock)
 	if err != nil {
 		panic(err)
@@ -20,6 +19,7 @@ func (iter *BlockChainIter) Next() Block {
 
 //后面是否还有数据
 func (iter *BlockChainIter) HasNext() bool {
+
 	_, err := iter.BC.GetBlock(iter.CurentBlock)
 	if err != nil {
 		return false
